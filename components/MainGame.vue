@@ -11,7 +11,7 @@
           Welcome to the main menu of the maze game.
         </h1>
         <div class="text-center">
-          <button @click="startGame" class="bg-yellow-500 py-3 px-4">Start the game</button>
+          <button @click="startGame" class="bg-yellow-600 py-3 px-4">Start the game</button>
         </div>
       </div>
     </div>
