@@ -112,10 +112,11 @@ export default Vue.extend({
                 this.timer = setInterval(this.pour, [this.timeOut]);
             } else if (e.type === "mouseup") {
                 this.isMouseDown = false;
+                this.bottleAnimation(this.isMouseDown);
             }
         },
         pour() {
-            this.bottleAnimation();
+            this.bottleAnimation(this.isMouseDown);
             this.pourInCurrentGlass(this.currentGlass);
             if (!this.isMouseDown) {
                 if (this.currentGlass === 3) {
@@ -130,21 +131,24 @@ export default Vue.extend({
                 clearInterval(this.timer);
             }
         },
-        bottleAnimation() {
+        bottleAnimation(position) {
             const bottle = document.querySelector('.bottle');
-            if (bottle) {
-                bottle.classList.value = 'bottle';
-                switch (this.currentGlass) {
-                    case 1:
-                        bottle.classList.add('glass-1')
-                        break;
-                    case 2:
-                        bottle.classList.add('glass-2')
-                        break;
-                    default:
-                        bottle.classList.add('glass-3')
-                        break;
+            if (position) {
+                if (bottle) {
+                    switch (this.currentGlass) {
+                        case 1:
+                            bottle.classList.add('glass-1')
+                            break;
+                        case 2:
+                            bottle.classList.add('glass-2')
+                            break;
+                        default:
+                            bottle.classList.add('glass-3')
+                            break;
+                    }
                 }
+            } else {
+                bottle.classList.value = 'bottle';
             }
         },
         pourInCurrentGlass(glassNum: number): void {
@@ -232,7 +236,7 @@ export default Vue.extend({
 
     .bottle {
         @apply flex flex-col justify-end mr-20;
-        transition: all 0.3s ease;
+        transition: all 1s ease;
         .bottle-top {
             @apply h-24 w-10 border-4 mx-auto border-b-0;
             background: rgba(153, 92, 80, 0.2);
