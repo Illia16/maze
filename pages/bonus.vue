@@ -57,6 +57,7 @@
 </template>
 
 <script lang="ts">
+// @ts-nocheck
 declare interface MiniGame {
     timer: number;
     timeOut: number;
