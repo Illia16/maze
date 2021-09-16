@@ -15,8 +15,8 @@
             </select>
         </div>
         <button
-            @mousedown.prevent="pushDown"
-            @mouseup.prevent="pushDown"
+            @mousedown.prevent="holdBtn"
+            @mouseup.prevent="holdBtn"
             class="pour-btn"
             :disabled="gameOver || !timeOut"
         >
@@ -57,7 +57,6 @@
 </template>
 
 <script lang="ts">
-// @ts-nocheck
 declare interface MiniGame {
     timer: number;
     timeOut: number;
@@ -67,9 +66,7 @@ declare interface MiniGame {
     totalAmount: number;
     step: number;
     glasses: {
-        glass1: number;
-        glass2: number;
-        glass3: number;
+        [key:string]:number,
     };
     gameOver: boolean;
     gameWon: boolean;
@@ -95,43 +92,48 @@ export default Vue.extend({
             gameWon: false
         };
     },
-    mounted: function() {
-        console.log(this);
-    },
     methods: {
-        pushDown(e: KeyboardEvent) {
-            if (this.totalAmount === 0) {
-                this.gameOver = true;
-                return;
-            }
-            console.log('e', e);
-
-
+        holdBtn(e: KeyboardEvent) {
             if (e.type === "mousedown") {
+                console.log('mousedown');
+                this.checkIfGameOver()
                 this.isMouseDown = true;
-                this.timer = setInterval(this.pour, [this.timeOut]);
+                this.timer = window.setInterval(this.pourDown, this.timeOut);
             } else if (e.type === "mouseup") {
+                console.log('mouseup');
+                this.checkIfGameOver()
                 this.isMouseDown = false;
                 this.bottleAnimation(this.isMouseDown);
-            }
-        },
-        pour() {
-            this.bottleAnimation(this.isMouseDown);
-            this.pourInCurrentGlass(this.currentGlass);
-            if (!this.isMouseDown) {
-                if (this.currentGlass === 3) {
-                    this.currentGlass = 1;
-                } else {
-                    this.currentGlass++;
-                }
+                this.nextGlass();
                 clearInterval(this.timer);
             }
-
+        },
+        pourDown() {
+            this.bottleAnimation(this.isMouseDown);
+            this.totalAmount = this.totalAmount - this.step;
+            this.glasses[`glass${this.currentGlass}`] += this.step;
+        },
+        checkIfGameOver() {
             if (this.totalAmount === 0) {
                 clearInterval(this.timer);
+                this.gameOver = true;
+                if (
+                    this.glasses.glass1 === this.userAmount / 3 &&
+                    this.glasses.glass2 === this.userAmount / 3 &&
+                    this.glasses.glass3 === this.userAmount / 3
+                ) {
+                    this.gameWon = true;
+                }
             }
         },
-        bottleAnimation(position) {
+        nextGlass() {
+            if (this.currentGlass === 3) {
+                this.currentGlass = 1;
+            } else {
+                this.currentGlass++;
+            }
+        },
+        bottleAnimation(position:boolean) {
             const bottle = document.querySelector('.bottle');
             if (position) {
                 if (bottle) {
@@ -148,21 +150,8 @@ export default Vue.extend({
                     }
                 }
             } else {
-                bottle.classList.value = 'bottle';
+                if (bottle) bottle.classList.value = 'bottle';
             }
-        },
-        pourInCurrentGlass(glassNum: number): void {
-            this.totalAmount = this.totalAmount - this.step;
-            if (glassNum === 1) {
-                this.glasses.glass1 += this.step;
-            } else if (glassNum === 2) {
-                this.glasses.glass2 += this.step;
-            } else {
-                this.glasses.glass3 += this.step;
-            }
-            // TO DO, figure out how to fix TS warning;
-            // this.glasses[`glass${glassNum}`] =
-                // this.glasses[`glass${glassNum}`] + 5;
         },
         startOver() {
             const bottle = document.querySelector('.bottle');
@@ -179,21 +168,7 @@ export default Vue.extend({
     },
     watch: {
         totalAmount: function() {
-            console.log("total", this.totalAmount);
-            if (this.totalAmount === 0) {
-                if (
-                    this.glasses.glass1 &&
-                    this.glasses.glass2 &&
-                    this.glasses.glass3 === this.userAmount / 3
-                ) {
-                    console.log("WIN!");
-                    this.gameOver = true;
-                    this.gameWon = true;
-                } else {
-                    console.log('LOOSE!');
-                    this.gameOver = true;
-                }
-            }
+            this.checkIfGameOver()
         }
     }
 });
@@ -250,7 +225,7 @@ export default Vue.extend({
             background: rgba(153, 92, 80, 0.2);
             div {
                 @apply w-full bg-red-700 opacity-70 relative;
-                transition: height 0.3s ease;
+                transition: height 0.75s ease;
             }
         }
 
@@ -276,7 +251,7 @@ export default Vue.extend({
 
             .glass-inner {
                 @apply w-full bg-red-700 opacity-70 relative;
-                transition: height 0.3s ease;
+                transition: height 0.75s ease;
             }
         }
         .glass-bottom {
