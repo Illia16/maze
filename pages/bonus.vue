@@ -1,9 +1,9 @@
 <template>
     <div
-        class="mini-game p-16 flex flex-col justify-center items-center space-y-10"
+        class="mini-game p-16 flex flex-col justify-center items-center space-y-5"
     >
-        <NuxtLink to="/" class="go-back-link">Go back</NuxtLink>
-        <h1 class="text-pink-400 font-bold text-3xl">
+        <NuxtLink to="/" class="go-back-link">&#8592;</NuxtLink>
+        <h1 class="text-pink-400 font-bold text-3xl w-52">
             Get the equal amount in all 3 glasses
         </h1>
         <div class="h-12">
@@ -14,6 +14,8 @@
                 <option :value=100>Hard</option>
             </select>
         </div>
+        <button @click="setHideBottle" class="hide-bottle">Show/Hide bottle</button>
+
         <button
             @mousedown.prevent="holdBtn"
             @mouseup.prevent="holdBtn"
@@ -31,12 +33,14 @@
             <button @click="startOver" class="start-over-btn">Start Over</button>
         </div>
 
-        <div class="flex space-x-10 items-end">
-            <div class="bottle">
-                <div class="bottle-top"></div>
-                <div class="bottle-mid"></div>
-                <div class="bottle-bottom" :style="{height: userAmount + 'px'}">
-                    <div :style="{height: totalAmount + 'px'}"></div>
+        <div class="flex space-x-5 md:space-x-10 items-end">
+            <div class="w-16 h-[27rem] md:w-52 md:h-96">
+                <div v-if="!hideBottle" class="bottle">
+                    <div class="bottle-top"></div>
+                    <div class="bottle-mid"></div>
+                    <div class="bottle-bottom" :style="{height: userAmount + 'px'}">
+                        <div :style="{height: totalAmount + 'px'}"></div>
+                    </div>
                 </div>
             </div>
             <div
@@ -70,6 +74,7 @@ declare interface MiniGame {
     glasses: {
         [key:string]:number,
     };
+    hideBottle: boolean,
     gameOver: boolean;
     gameWon: boolean;
 }
@@ -90,6 +95,7 @@ export default Vue.extend({
                 glass2: 0,
                 glass3: 0
             },
+            hideBottle: false,
             gameOver: false,
             gameWon: false
         };
@@ -155,6 +161,9 @@ export default Vue.extend({
                 if (bottle) bottle.classList.value = 'bottle';
             }
         },
+        setHideBottle(){
+            this.hideBottle = !this.hideBottle;
+        },
         startOver() {
             const bottle = document.querySelector('.bottle');
             if (bottle) bottle.classList.value = 'bottle';
@@ -180,16 +189,21 @@ export default Vue.extend({
 .mini-game {
     @apply bg-black min-h-screen;
 
+    .hide-bottle,
     .go-back-link,
     select,
     .pour-btn,
     .start-over-btn {
-        @apply bg-pink-400 py-3 px-16 border-2 border-transparent;
+        @apply bg-pink-400 w-52 h-12 text-center border-2 border-transparent;
 
         &:hover:not(:disabled),
         &:focus:not(:disabled) {
             @apply bg-transparent border-2 border-pink-400 text-white;
         }
+    }
+
+    .go-back-link {
+        @apply fixed top-4 left-4 w-12 h-6 text-sm;
     }
 
     .game-over {
@@ -201,10 +215,6 @@ export default Vue.extend({
         }
     }
 
-    .go-back-link {
-        @apply fixed top-4 left-4 uppercase p-3;
-    }
-
     .pour-btn {
         &:disabled {
             background: rgb(244, 114, 182, 50%);
@@ -212,18 +222,18 @@ export default Vue.extend({
     }
 
     .bottle {
-        @apply flex flex-col justify-end mr-20;
+        @apply flex flex-col justify-end mr-2 md:mr-20;
         transition: all 1s ease;
         .bottle-top {
-            @apply h-24 w-10 border-4 mx-auto border-b-0;
+            @apply h-24 w-5 md:w-10 border-4 mx-auto border-b-0 translate-y-1 md:transform-none;
             background: rgba(153, 92, 80, 0.2);
         }
         .bottle-mid {
-            @apply h-12 w-32 border-4 border-b-0 rounded-t-full;
+            @apply h-12 w-14 md:w-32 border-4 border-b-0 rounded-t-full;
             background: rgba(153, 92, 80, 0.2);
         }
         .bottle-bottom {
-            @apply flex items-end w-32 border-4 border-t-0 rounded-b-3xl overflow-hidden;
+            @apply flex items-end w-14 md:w-32 border-4 border-t-0 rounded-b-3xl overflow-hidden;
             background: rgba(153, 92, 80, 0.2);
             div {
                 @apply w-full bg-red-700 opacity-70 relative;
@@ -233,22 +243,31 @@ export default Vue.extend({
 
 
         &.glass-1 {
-            transform: rotate(70deg) translateX(-125px) translateY(-75px);
+            transform: rotate(70deg) translateX(0) translateY(130px);
+            @screen md {
+                transform: rotate(70deg) translateX(-125px) translateY(-75px);
+            }
         }
 
         &.glass-2 {
-            transform: rotate(70deg) translateX(-50px) translateY(-250px);
+            transform: rotate(70deg) translateX(-47px) translateY(59px);
+            @screen md {
+                transform: rotate(70deg) translateX(-50px) translateY(-250px);
+            }
         }
 
         &.glass-3 {
-            transform: rotate(70deg) translateX(-25px) translateY(-400px);
+            transform: rotate(70deg) translateX(-25px) translateY(-10px);
+            @screen md {
+                transform: rotate(70deg) translateX(-25px) translateY(-400px);
+            }
         }
     }
 
     .glass {
         @apply flex flex-col items-center;
         .glass-top {
-            @apply flex items-end w-32 h-[120px] border-4 rounded-t-lg rounded-b-[50px] overflow-hidden;
+            @apply flex items-end w-12 md:w-32 h-[120px] border-4 rounded-t-lg rounded-b-[50px] overflow-hidden;
             background: rgba(128, 168, 194, 0.2);
 
             .glass-inner {
@@ -261,10 +280,14 @@ export default Vue.extend({
 
             &:after {
                 content: "";
-                @apply w-24 h-12 top-20 absolute;
+                @apply w-10 h-6 md:w-24 md:h-12 top-20 absolute;
                 border-radius: 100px / 50px;
-                right: calc(-48px + 3px);
+                right: calc(-20px + 3px);
                 background: rgb(235, 229, 229);
+
+                @screen md {
+                    right: calc(-48px + 3px);
+                }
             }
         }
     }
