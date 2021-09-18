@@ -1,6 +1,7 @@
 <template>
     <div :class="[`maze-cell x${cellState.cellX} y${cellState.cellY}`]">
-        {{cellState.cell}}
+        x{{cellState.cellX}}
+        y{{cellState.cellY}}
     </div>
 </template>
 
