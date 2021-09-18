@@ -17,6 +17,8 @@
         <button
             @mousedown.prevent="holdBtn"
             @mouseup.prevent="holdBtn"
+            @touchstart.prevent='holdBtn'
+            @touchend.prevent='holdBtn'
             class="pour-btn"
             :disabled="gameOver || !timeOut"
         >
@@ -94,12 +96,12 @@ export default Vue.extend({
     },
     methods: {
         holdBtn(e: KeyboardEvent) {
-            if (e.type === "mousedown") {
+            if ((e.type === "mousedown") || (e.type === 'touchstart')) {
                 console.log('mousedown');
                 this.checkIfGameOver()
                 this.isMouseDown = true;
                 this.timer = window.setInterval(this.pourDown, this.timeOut);
-            } else if (e.type === "mouseup") {
+            } else if ((e.type === "mouseup") || (e.type === 'touchend')) {
                 console.log('mouseup');
                 this.checkIfGameOver()
                 this.isMouseDown = false;

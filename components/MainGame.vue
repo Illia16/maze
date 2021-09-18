@@ -1,4 +1,3 @@
-<!-- Please remove this file from your project -->
 <template>
     <div
         class="maze-main relative flex items-top justify-center min-h-screen bg-gray-100 sm:items-center sm:pt-0"
@@ -62,6 +61,15 @@
                         Start the game
                     </button>
                 </div>
+                <div :class="[`maze grid grid-cols-${cellNumbersX} grid-rows-${cellNumbersY}`]">
+                    <template v-for="(cell, index) in cells">
+                        <Cell :cellData='cell' :key="index" />
+                    </template>
+                        <!-- :class="[`maze-cell x${toXorY('x', cell)}y${toXorY('y', cell)}`]"
+                        custom='not-visited'
+                        :x="toXorY('x', cell)"
+                        :y="toXorY('y', cell)" -->
+                </div>
             </div>
         </div>
     </div>
@@ -69,16 +77,74 @@
 
 <script lang="ts">
 import Vue from "vue";
+
+declare interface MainGameData {
+    cells: Array<Object>,
+    cellNumbers: number,
+    cellNumbersX: number,
+    cellNumbersY: number,
+    gameStarted: boolean,
+}
+
 export default Vue.extend({
-    data() {
+    data():MainGameData {
         return {
+            cells: [],
+            cellNumbers: 25,
+            cellNumbersX: 10,
+            cellNumbersY: 5,
             gameStarted: false
         };
+    },
+    mounted() {
+        for (let y = 1; y <= this.cellNumbersY; y++) {
+
+            // Method 1 without O2 time complexity
+            // this.cells.push({
+            //     'cell': i,
+            //     'cellX': (i % Math.sqrt(this.cellNumbers) === 0) ? Math.sqrt(this.cellNumbers) : i % Math.sqrt(this.cellNumbers),
+            //     'cellY': (i % Math.sqrt(this.cellNumbers) === 0) ? this.cellYhelper+1 : this.cellYhelper,
+            // });
+            for (let x = 1; x <= this.cellNumbersX; x++) {
+                this.cells.push({
+                    'cellX': x,
+                    'cellY': y,
+                    'visited': false,
+                    'directions': [
+                        y !== 1 ? 'top' : null ,
+                        x < this.cellNumbersX ? 'right' : null,
+                        y < this.cellNumbersY ? 'bottom' : null,
+                        x > 1 ? 'left' : null,
+                    ],
+                });
+            }
+        }
     },
     methods: {
         startGame() {
             this.gameStarted = true;
-            console.log("GAME STARTED!", this.gameStarted);
+        },
+        toXorY(coordinate:string, number:number):number {
+            if (coordinate === 'x'){
+                // console.log(number);
+
+                if (number % Math.sqrt(this.cellNumbers) === 0 ) {
+                    // console.log('% by 5', number);
+                    return 5
+                } else {
+                    return number % Math.sqrt(this.cellNumbers);
+                }
+            } else {
+                return 1
+                // if (number !== 1 && number-1 % Math.sqrt(this.cellNumbers) === 0) {
+                //     console.log('dd');
+
+                //     this.cellHelper++;
+                //     return this.cellHelper;
+                // } else {
+                //     return this.cellHelper;
+                // }
+            }
         }
     }
 });
@@ -89,6 +155,15 @@ export default Vue.extend({
     @apply overflow-x-hidden;
     h1 {
         @apply text-3xl text-yellow-600;
+    }
+
+
+    .maze {
+        @apply justify-center my-10 mx-auto border;
+
+        .maze-cell {
+            @apply border-r border-b w-[60px] h-[60px];
+        }
     }
 
     .go-to-bonus {
