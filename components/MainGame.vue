@@ -49,7 +49,14 @@ declare interface MainGameData {
     path: Array<string>,
 }
 
-type RandomValidDirectionType = Array<[string, CellData]>;
+type getUnvisitedCellType = RandomValidDirectionType | null;
+type RandomValidDirectionType = ValidDirectionType;
+
+interface ValidDirectionType {
+    length: number,
+    direction: string[];
+    data: CellData;
+}
 
 export default Vue.extend({
     data():MainGameData {
@@ -89,7 +96,7 @@ export default Vue.extend({
             if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY && !cell.visited) currentCell.validDirections.push('exit')
 
             currentCell.visited = true;
-            const validNextCell = this.getUnvisitedCell(cell); // checking for a valid next direction
+            const validNextCell:any = this.getUnvisitedCell(cell); // checking for a valid next direction
 
 
             // setting entrance
@@ -130,9 +137,11 @@ export default Vue.extend({
         isAllCellsVisited() {
             return this.cells.every( (el) => el.visited === true);
         },
-        getUnvisitedCell(cell:CellData):string | null {
-            const allDirections = cell.directions.filter(el=>el);
-            const allDirectionsUnvisited = allDirections.map( (direction) => {
+        getUnvisitedCell(cell:CellData):getUnvisitedCellType {
+            console.log('cell', cell);
+
+            const allDirections = cell.directions.filter(el=> el) as Array<string>;
+            const allDirectionsUnvisited:any = allDirections.map( (direction:string) => {
                 if (direction === 'top') {
                     return [direction, this.cells.find( (el) => el.cellX === cell.cellX && el.cellY === cell.cellY-1 && !el.visited)]
                 } else if (direction === 'bottom') {
@@ -142,13 +151,14 @@ export default Vue.extend({
                 } else if (direction === 'left') {
                     return [direction, this.cells.find( (el) => el.cellY === cell.cellY && el.cellX === cell.cellX-1 && !el.visited)]
                 }
-            })
+            });
 
-            const filterValid = allDirectionsUnvisited.filter( (el) => el[1]);
-            const randomValidDirection = filterValid[Math.floor(Math.random()*filterValid.length)];
+            const filterValid = allDirectionsUnvisited.filter((el:any) => el![1]);
+            const randomValidDirection = filterValid[Math.floor(Math.random()*filterValid.length)] as RandomValidDirectionType;
+            console.log('randomValidDirection', randomValidDirection, typeof(randomValidDirection));
 
             if (randomValidDirection?.length) {
-                return randomValidDirection as RandomValidDirectionType;
+                return randomValidDirection;
             } else {
                 return null;
             }
