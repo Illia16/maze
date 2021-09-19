@@ -38,7 +38,7 @@ declare interface CellData {
     cellY: number,
     visited: boolean,
     directions: Array<null | string>,
-    enterExit: Array<string>
+    validDirections: Array<string>
 }
 declare interface MainGameData {
     cells: Array<CellData>,
@@ -49,12 +49,15 @@ declare interface MainGameData {
     path: Array<string>,
 }
 
+// type RandomValidDirectionType = Array<[Array<[string, CellData]>, Array<[string, CellData]>]>;
+type RandomValidDirectionType = Array<[string, CellData]>;
+
 export default Vue.extend({
     data():MainGameData {
         return {
             cells: [],
             cellNumbers: 25,
-            cellNumbersX: 10,
+            cellNumbersX: 5,
             cellNumbersY: 5,
             gameStarted: false,
             path: [],
@@ -73,98 +76,94 @@ export default Vue.extend({
                         y < this.cellNumbersY ? 'bottom' : null,
                         x > 1 ? 'left' : null,
                     ],
-                    'enterExit': ['in', 'out'],
+                    'validDirections': [],
                 });
             }
         }
 
-        console.log('cells', this.cells);
         this.makePath(this.cells[0], 'entrance');
     },
     methods: {
         makePath(cell:CellData, prevCellExit:string) {
-            console.log('------------------------');
-            // console.log('cells', this.cells);
-            console.log('cell', cell);
-
             const currentCell = this.cells[this.cells.indexOf(cell)];
-            const isAlreadyVisited = currentCell.visited;
 
-            if (!isAlreadyVisited) {
-                currentCell.visited = true;
+            if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY) currentCell.validDirections.push('exit')
 
-                // checking if it's the bottom-right cell
-                if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY) {
-                    currentCell.visited = true;
-                    currentCell.enterExit[0] = prevCellExit === 'right' ? 'left' : 'top';
-                    currentCell.enterExit[1] = 'exit';
-                    console.log('END');
-                    return
-                }
+            if (this.isAllCellsVisited()) {
+                console.log('END');
+                return
+            }
 
-                // checking for a valid next direction
-                // const exit = cell.directions[1] ? cell.directions[1] : cell.directions[2] as string;
-                const exit = this.nextDirection(cell)
-                // setting entrance
-                currentCell.enterExit[0] =
-                    prevCellExit === 'entrance' ? 'entrance' :
-                    prevCellExit === 'left' ? 'right' :
-                    prevCellExit === 'right' ? 'left' :
-                    prevCellExit === 'top' ? 'bottom' :
-                    'top';
-
+            currentCell.visited = true;
+            // checking for a valid next direction
+            const validNextCell = this.getUnvisitedCell(cell);
+            // setting entrance
+            if (validNextCell) {
+                prevCellExit === 'entrance' ? currentCell.validDirections.push('entrance') :
+                prevCellExit === 'left' ? currentCell.validDirections.push('right') :
+                prevCellExit === 'right' ? currentCell.validDirections.push('left') :
+                prevCellExit === 'top' ? currentCell.validDirections.push('bottom') :
+                currentCell.validDirections.push('top');
                 // setting exit
-                currentCell.enterExit[1] = exit;
-                // console.log('exit', exit);
-                this.path.push(exit);
+                currentCell.validDirections.push(validNextCell[0]);
 
-                const findNextCell = this.cells.find( (el) => {
-                    if (exit === 'top') {
-                        return el.cellY === cell.cellY-1 && el.cellX === cell.cellX
-                    } else if (exit === 'right') {
-                        return el.cellX === cell.cellX+1 && el.cellY === cell.cellY;
-                    } else if (exit === 'bottom') {
-                        return el.cellY === cell.cellY+1 && el.cellX === cell.cellX;
-                    } else if (exit === 'left') {
-                        return el.cellX === cell.cellX-1 && el.cellY === cell.cellY;
-                    }
-                })
-
-                this.makePath(findNextCell as CellData, exit)
-            } else {
-                const lastMove = this.path[this.path.length-1];
-                console.log('lastMove', lastMove);
-
-                const findPrevCell = this.cells.find( (el) => {
-                    console.log('el', el);
-                    console.log('cell', cell);
-
-                    if (lastMove === 'top') {
-                        return el.cellX === cell.cellX && el.cellY === cell.cellY+1
-                    } else if (lastMove === 'bottom') {
-                        return el.cellX === cell.cellX && el.cellY === cell.cellY-1
-                    } else if (lastMove === 'right') {
-                        return el.cellY === cell.cellY && el.cellX === cell.cellX-1
-                    } else if (lastMove === 'left') {
-                        return el.cellY === cell.cellY && el.cellX === cell.cellX+1
-                    }
-                })
-
-                console.log('prevCellExit', prevCellExit);
-                this.path.pop();
-                console.log(this.path[this.path.length-1]);
-                console.log('findPrevCell', findPrevCell);
-
-                // this.makePath(findPrevCell as CellData, this.path[this.path.length-1]);
+                this.path.push(validNextCell[0]);
+                this.makePath(validNextCell[1] as CellData, validNextCell[0]);
+            } else if (!validNextCell) {
+                prevCellExit === 'entrance' ? currentCell.validDirections.push('entrance') :
+                prevCellExit === 'left' ? currentCell.validDirections.push('right') :
+                prevCellExit === 'right' ? currentCell.validDirections.push('left') :
+                prevCellExit === 'top' ? currentCell.validDirections.push('bottom') :
+                currentCell.validDirections.push('top');
+                this.goBackOneCell(cell)
             }
         },
-        nextDirection(cell:CellData):string {
-            const allPossibleDirections = cell.directions.filter(el=>el);
-            const randomDirection = allPossibleDirections[Math.floor(Math.random()*allPossibleDirections.length)];
-            return randomDirection as string;
-        },
-        checkIfVisited() {
+        goBackOneCell(cell:CellData) {
+            if (this.isAllCellsVisited()) {
+                return
+            }
 
+            const lastMove = this.path[this.path.length-1];
+            const findPrevCell = this.cells.find( (el) => {
+                if (lastMove === 'top') {
+                    return el.cellX === cell.cellX && el.cellY === cell.cellY+1
+                } else if (lastMove === 'bottom') {
+                    return el.cellX === cell.cellX && el.cellY === cell.cellY-1
+                } else if (lastMove === 'right') {
+                    return el.cellY === cell.cellY && el.cellX === cell.cellX-1
+                } else if (lastMove === 'left') {
+                    return el.cellY === cell.cellY && el.cellX === cell.cellX+1
+                }
+            })
+            this.path.pop();
+            this.makePath(findPrevCell as CellData, this.path[this.path.length-1]);
+
+        },
+        isAllCellsVisited() {
+            return this.cells.every( (el) => el.visited === true);
+        },
+        getUnvisitedCell(cell:CellData):string | null {
+            const allDirections = cell.directions.filter(el=>el);
+            const allDirectionsUnvisited = allDirections.map( (direction) => {
+                if (direction === 'top') {
+                    return [direction, this.cells.find( (el) => el.cellX === cell.cellX && el.cellY === cell.cellY-1 && !el.visited)]
+                } else if (direction === 'bottom') {
+                    return [direction, this.cells.find( (el) => el.cellX === cell.cellX && el.cellY === cell.cellY+1 && !el.visited)]
+                } else if (direction === 'right') {
+                    return [direction, this.cells.find( (el) => el.cellY === cell.cellY && el.cellX === cell.cellX+1 && !el.visited)]
+                } else if (direction === 'left') {
+                    return [direction, this.cells.find( (el) => el.cellY === cell.cellY && el.cellX === cell.cellX-1 && !el.visited)]
+                }
+            })
+
+            const filterValid = allDirectionsUnvisited.filter( (el) => el[1]);
+            const randomValidDirection = filterValid[Math.floor(Math.random()*filterValid.length)];
+
+            if (randomValidDirection?.length) {
+                return randomValidDirection as RandomValidDirectionType;
+            } else {
+                return null;
+            }
         },
         startGame() {
             this.gameStarted = true;
