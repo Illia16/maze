@@ -49,7 +49,6 @@ declare interface MainGameData {
     path: Array<string>,
 }
 
-// type RandomValidDirectionType = Array<[Array<[string, CellData]>, Array<[string, CellData]>]>;
 type RandomValidDirectionType = Array<[string, CellData]>;
 
 export default Vue.extend({
@@ -57,8 +56,8 @@ export default Vue.extend({
         return {
             cells: [],
             cellNumbers: 25,
-            cellNumbersX: 5,
-            cellNumbersY: 5,
+            cellNumbersX: 15,
+            cellNumbersY: 15,
             gameStarted: false,
             path: [],
         };
@@ -87,41 +86,30 @@ export default Vue.extend({
         makePath(cell:CellData, prevCellExit:string) {
             const currentCell = this.cells[this.cells.indexOf(cell)];
 
-            if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY) currentCell.validDirections.push('exit')
-
-            if (this.isAllCellsVisited()) {
-                console.log('END');
-                return
-            }
+            if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY && !cell.visited) currentCell.validDirections.push('exit')
 
             currentCell.visited = true;
-            // checking for a valid next direction
-            const validNextCell = this.getUnvisitedCell(cell);
-            // setting entrance
-            if (validNextCell) {
-                prevCellExit === 'entrance' ? currentCell.validDirections.push('entrance') :
-                prevCellExit === 'left' ? currentCell.validDirections.push('right') :
-                prevCellExit === 'right' ? currentCell.validDirections.push('left') :
-                prevCellExit === 'top' ? currentCell.validDirections.push('bottom') :
-                currentCell.validDirections.push('top');
-                // setting exit
-                currentCell.validDirections.push(validNextCell[0]);
+            const validNextCell = this.getUnvisitedCell(cell); // checking for a valid next direction
 
-                this.path.push(validNextCell[0]);
-                this.makePath(validNextCell[1] as CellData, validNextCell[0]);
+
+            // setting entrance
+            prevCellExit === 'entrance' ? currentCell.validDirections.push('entrance') :
+            prevCellExit === 'left' ? currentCell.validDirections.push('right') :
+            prevCellExit === 'right' ? currentCell.validDirections.push('left') :
+            prevCellExit === 'top' ? currentCell.validDirections.push('bottom') :
+            currentCell.validDirections.push('top');
+            //
+
+            if (validNextCell) {
+                currentCell.validDirections.push(validNextCell[0]); // setting exit
+                this.path.push(validNextCell[0]); // adding a step to the path
+                this.makePath(validNextCell[1] as CellData, validNextCell[0]); // going to the next valid cell
             } else if (!validNextCell) {
-                prevCellExit === 'entrance' ? currentCell.validDirections.push('entrance') :
-                prevCellExit === 'left' ? currentCell.validDirections.push('right') :
-                prevCellExit === 'right' ? currentCell.validDirections.push('left') :
-                prevCellExit === 'top' ? currentCell.validDirections.push('bottom') :
-                currentCell.validDirections.push('top');
                 this.goBackOneCell(cell)
             }
         },
         goBackOneCell(cell:CellData) {
-            if (this.isAllCellsVisited()) {
-                return
-            }
+            if (this.isAllCellsVisited()) return
 
             const lastMove = this.path[this.path.length-1];
             const findPrevCell = this.cells.find( (el) => {
