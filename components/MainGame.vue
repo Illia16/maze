@@ -12,17 +12,24 @@
         <div class="mx-auto sm:px-6 lg:px-8">
             <div class="mt-8 bg-white overflow-hidden shadow sm:rounded-lg p-6">
                 <h1 class="text-2xl leading-7 font-semibold">
-                    Welcome to the main menu of the maze game.
+                    Maze generator. Use keyboard arrows to move.
                 </h1>
                 <div class="text-center">
-                    <button @click="startGame" class="bg-yellow-600 py-3 px-4">
+                    <button v-if="!gameStarted" @click="startGame" class="bg-yellow-600 py-3 px-4">
                         Start the game
                     </button>
                 </div>
-                <div class="maze flex flex-wrap" :style="{width: cellNumbersX*50+2+'px'}">
+                <div v-if="gameStarted" class="maze flex flex-wrap" :style="{width: cellNumbersX*50+2+'px'}">
                     <template v-for="(cell, index) in cells">
-                        <Cell :cellData='cell' :key="index" />
+                        <Cell :cellData='cell' :playerPositionPropName='playerPosition' :key="index" />
                     </template>
+                </div>
+                <div v-if="genMazeLoading">Generating maze...</div>
+                <div v-if="gameStarted" class="arrow-buttons">
+                    <button value="top" @click="playerMoveHandler">&#8593;</button>
+                    <button value="right" @click="playerMoveHandler">&#8594;</button>
+                    <button value="bottom" @click="playerMoveHandler">&#8595;</button>
+                    <button value="left" @click="playerMoveHandler">&#8592;</button>
                 </div>
             </div>
         </div>
@@ -41,11 +48,12 @@ declare interface CellData {
     validDirections: Array<string>
 }
 declare interface MainGameData {
+    playerPosition: Array<number>,
     cells: Array<CellData>,
-    cellNumbers: number,
     cellNumbersX: number,
     cellNumbersY: number,
     gameStarted: boolean,
+    genMazeLoading: boolean,
     path: Array<string>,
 }
 
@@ -61,35 +69,37 @@ interface ValidDirectionType {
 export default Vue.extend({
     data():MainGameData {
         return {
+            playerPosition: [1, 1],
             cells: [],
-            cellNumbers: 25,
-            cellNumbersX: 15,
-            cellNumbersY: 15,
+            cellNumbersX: 4,
+            cellNumbersY: 4,
             gameStarted: false,
+            genMazeLoading: false,
             path: [],
         };
     },
     mounted() {
-        for (let y = 1; y <= this.cellNumbersY; y++) {
-            for (let x = 1; x <= this.cellNumbersX; x++) {
-                this.cells.push({
-                    'cellX': x,
-                    'cellY': y,
-                    'visited': false,
-                    'directions': [
-                        y !== 1 ? 'top' : null ,
-                        x < this.cellNumbersX ? 'right' : null,
-                        y < this.cellNumbersY ? 'bottom' : null,
-                        x > 1 ? 'left' : null,
-                    ],
-                    'validDirections': [],
-                });
-            }
-        }
-
-        this.makePath(this.cells[0], 'entrance');
+        this.genMaze()
     },
     methods: {
+        genMaze() {
+            for (let y = 1; y <= this.cellNumbersY; y++) {
+                for (let x = 1; x <= this.cellNumbersX; x++) {
+                    this.cells.push({
+                        'cellX': x,
+                        'cellY': y,
+                        'visited': false,
+                        'directions': [
+                            y !== 1 ? 'top' : null ,
+                            x < this.cellNumbersX ? 'right' : null,
+                            y < this.cellNumbersY ? 'bottom' : null,
+                            x > 1 ? 'left' : null,
+                        ],
+                        'validDirections': [],
+                    });
+                }
+            }
+        },
         makePath(cell:CellData, prevCellExit:string) {
             const currentCell = this.cells[this.cells.indexOf(cell)];
 
@@ -116,7 +126,10 @@ export default Vue.extend({
             }
         },
         goBackOneCell(cell:CellData) {
-            if (this.isAllCellsVisited()) return
+            if (this.isAllCellsVisited()) {
+                this.genMazeLoading = false;
+                return
+            }
 
             const lastMove = this.path[this.path.length-1];
             const findPrevCell = this.cells.find( (el) => {
@@ -138,8 +151,6 @@ export default Vue.extend({
             return this.cells.every( (el) => el.visited === true);
         },
         getUnvisitedCell(cell:CellData):getUnvisitedCellType {
-            console.log('cell', cell);
-
             const allDirections = cell.directions.filter(el=> el) as Array<string>;
             const allDirectionsUnvisited:any = allDirections.map( (direction:string) => {
                 if (direction === 'top') {
@@ -155,7 +166,6 @@ export default Vue.extend({
 
             const filterValid = allDirectionsUnvisited.filter((el:any) => el![1]);
             const randomValidDirection = filterValid[Math.floor(Math.random()*filterValid.length)] as RandomValidDirectionType;
-            console.log('randomValidDirection', randomValidDirection, typeof(randomValidDirection));
 
             if (randomValidDirection?.length) {
                 return randomValidDirection;
@@ -165,7 +175,64 @@ export default Vue.extend({
         },
         startGame() {
             this.gameStarted = true;
+            this.genMazeLoading = true;
+            this.makePath(this.cells[0], 'entrance');
+            document.addEventListener('keydown', this.playerMoveHandler)
         },
+        playerMoveHandler(e:any) {
+            console.log('e', e.target);
+
+            const [playerX, playerY] = this.playerPosition;
+
+            // checking if the last cell.
+            if (playerX === this.cellNumbersX && playerY === this.cellNumbersY) {
+                this.gameStarted = false;
+                this.playerPosition = [1, 1];
+                this.path = [];
+
+                const resetValidDirections = this.cells.map(el => {
+                    el.visited = false;
+                    el.validDirections = [];
+                    return el;
+                })
+                this.cells = resetValidDirections;
+                console.log('resetValidDirections', resetValidDirections);
+                console.log('WIN');
+                return
+            }
+
+            const [ getCurrentPositionCell ] = this.cells.filter( (el) => {
+                if ((el.cellX === playerX) && (el.cellY === playerY)){
+                    return el;
+                }
+            }) as any
+
+            // go top
+            if ((e.which === 38) || (e.target.value === 'top')) {
+                if (getCurrentPositionCell.validDirections && getCurrentPositionCell.validDirections.includes('top')) {
+                    const newArr = [playerX, playerY-1]
+                    this.playerPosition = newArr;
+                }
+            } else if ((e.which === 39) || (e.target.value === 'right')) { // go right
+                if (getCurrentPositionCell.validDirections && getCurrentPositionCell.validDirections.includes('right')) {
+                    const newArr = [playerX+1, playerY];
+                    this.playerPosition = newArr;
+                }
+            } else if ((e.which === 40) || (e.target.value === 'bottom')) { // go bottom
+                if (getCurrentPositionCell.validDirections && getCurrentPositionCell.validDirections.includes('bottom')) {
+                    const newArr = [playerX, playerY+1];
+                    this.playerPosition = newArr;
+                }
+            } else if ((e.which === 37) || (e.target.value === 'left')) { // go left
+                if ( getCurrentPositionCell.validDirections && getCurrentPositionCell.validDirections.includes('left')) {
+                    const newArr = [playerX-1, playerY];
+                    this.playerPosition = newArr;
+                }
+            }
+        },
+    },
+    destroyed() {
+        document.removeEventListener('keydown', this.playerMoveHandler);
     }
 });
 </script>
@@ -183,6 +250,30 @@ export default Vue.extend({
 
         .maze-cell {
             @apply w-[50px] h-[50px];
+        }
+    }
+
+    .arrow-buttons {
+        @apply relative w-36 h-36 mx-auto my-3;
+        button {
+            @apply border border-black bg-blue-100 p-2 absolute w-10 h-10;
+
+            &:nth-child(1) {
+                left: calc(50% - 2.5rem/2);
+                @apply top-0;
+            }
+            &:nth-child(2) {
+                top: calc(50% - 2.5rem/2);
+                @apply right-0;
+            }
+            &:nth-child(3) {
+                left: calc(50% - 2.5rem/2);
+                @apply bottom-0;
+            }
+            &:nth-child(4) {
+                top: calc(50% - 2.5rem/2);
+                @apply left-0;
+            }
         }
     }
 
