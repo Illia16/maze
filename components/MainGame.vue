@@ -5,31 +5,27 @@
         <div class="go-to-bonus">
             <NuxtLink to="/bonus">Bonus game</NuxtLink>
         </div>
-        <link
-            href="https://cdn.jsdelivr.net/npm/tailwindcss@2.1.2/dist/tailwind.min.css"
-            rel="stylesheet"
-        />
         <div class="mx-auto sm:px-6 lg:px-8">
-            <div class="mt-8 bg-white overflow-hidden shadow sm:rounded-lg p-6">
-                <h1 class="text-2xl leading-7 font-semibold">
-                    Maze generator. Use keyboard arrows to move.
-                </h1>
-                <div class="text-center">
-                    <button v-if="!gameStarted" @click="startGame" class="bg-yellow-600 py-3 px-4">
-                        Start the game
-                    </button>
-                </div>
-                <div v-if="gameStarted" class="maze flex flex-wrap" :style="{width: cellNumbersX*50+2+'px'}">
-                    <template v-for="(cell, index) in cells">
-                        <Cell :cellData='cell' :playerPositionPropName='playerPosition' :key="index" />
-                    </template>
-                </div>
+            <div class="bg-white overflow-hidden shadow sm:rounded-lg p-6">
+                <h1 class="text-2xl leading-7 font-semibold mb-6 text-center">Maze</h1>
                 <div v-if="genMazeLoading">Generating maze...</div>
-                <div v-if="gameStarted" class="arrow-buttons">
-                    <button value="top" @click="playerMoveHandler">&#8593;</button>
-                    <button value="right" @click="playerMoveHandler">&#8594;</button>
-                    <button value="bottom" @click="playerMoveHandler">&#8595;</button>
-                    <button value="left" @click="playerMoveHandler">&#8592;</button>
+                <div v-if="gameStarted">
+                    <div>Level {{level}}</div>
+                    <div class="maze flex flex-wrap" :style="{width: cellNumbersX*25+2+'px'}">
+                        <template v-for="(cell, index) in cells">
+                            <Cell :cellData='cell' :playerPositionPropName='playerPosition' :maxX='cellNumbersX' :maxY='cellNumbersY' :key="index" />
+                        </template>
+                    </div>
+                        <div  class="arrow-buttons">
+                        <button value="top" @click="playerMoveHandler">&#8593;</button>
+                        <button value="right" @click="playerMoveHandler">&#8594;</button>
+                        <button value="bottom" @click="playerMoveHandler">&#8595;</button>
+                        <button value="left" @click="playerMoveHandler">&#8592;</button>
+                    </div>
+                    <p class="text-xs text-center">Use keyboard arrows to move.</p>
+                </div>
+                <div v-else class="text-center">
+                    <button v-if="!gameStarted" @click="startGame" class="bg-yellow-600 py-3 px-4">Start the game</button>
                 </div>
             </div>
         </div>
@@ -48,6 +44,7 @@ declare interface CellData {
     validDirections: Array<string>
 }
 declare interface MainGameData {
+    level: number,
     playerPosition: Array<number>,
     cells: Array<CellData>,
     cellNumbersX: number,
@@ -69,10 +66,11 @@ interface ValidDirectionType {
 export default Vue.extend({
     data():MainGameData {
         return {
+            level: 1,
             playerPosition: [1, 1],
             cells: [],
-            cellNumbersX: 4,
-            cellNumbersY: 4,
+            cellNumbersX: 5,
+            cellNumbersY: 5,
             gameStarted: false,
             genMazeLoading: false,
             path: [],
@@ -83,6 +81,7 @@ export default Vue.extend({
     },
     methods: {
         genMaze() {
+            this.cells = [];
             for (let y = 1; y <= this.cellNumbersY; y++) {
                 for (let x = 1; x <= this.cellNumbersX; x++) {
                     this.cells.push({
@@ -103,7 +102,11 @@ export default Vue.extend({
         makePath(cell:CellData, prevCellExit:string) {
             const currentCell = this.cells[this.cells.indexOf(cell)];
 
-            if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY && !cell.visited) currentCell.validDirections.push('exit')
+            // setting the exit
+            if (cell.cellX === this.cellNumbersX && cell.cellY === this.cellNumbersY && !cell.visited) {
+                currentCell.validDirections.push('exit');
+            }
+            // ////////////////
 
             currentCell.visited = true;
             const validNextCell:any = this.getUnvisitedCell(cell); // checking for a valid next direction
@@ -176,36 +179,28 @@ export default Vue.extend({
         startGame() {
             this.gameStarted = true;
             this.genMazeLoading = true;
+            this.playerPosition = [1, 1];
+            this.path = [];
+            const resetValidDirections = this.cells.map(el => {
+                el.visited = false;
+                el.validDirections = [];
+                return el;
+            })
+            this.cells = resetValidDirections;
+
             this.makePath(this.cells[0], 'entrance');
             document.addEventListener('keydown', this.playerMoveHandler)
         },
         playerMoveHandler(e:any) {
-            console.log('e', e.target);
-
             const [playerX, playerY] = this.playerPosition;
 
-            // checking if the last cell.
-            if (playerX === this.cellNumbersX && playerY === this.cellNumbersY) {
-                this.gameStarted = false;
-                this.playerPosition = [1, 1];
-                this.path = [];
-
-                const resetValidDirections = this.cells.map(el => {
-                    el.visited = false;
-                    el.validDirections = [];
-                    return el;
-                })
-                this.cells = resetValidDirections;
-                console.log('resetValidDirections', resetValidDirections);
-                console.log('WIN');
-                return
-            }
-
+            // getting current cell where player is
             const [ getCurrentPositionCell ] = this.cells.filter( (el) => {
                 if ((el.cellX === playerX) && (el.cellY === playerY)){
                     return el;
                 }
             }) as any
+            // ////////////////////////////////////
 
             // go top
             if ((e.which === 38) || (e.target.value === 'top')) {
@@ -230,10 +225,31 @@ export default Vue.extend({
                 }
             }
         },
+
+        nextLevel() {
+            this.level += 1;
+            this.cellNumbersX += 1;
+            this.cellNumbersY += 1;
+            this.genMaze()
+            this.startGame()
+        },
     },
     destroyed() {
         document.removeEventListener('keydown', this.playerMoveHandler);
-    }
+    },
+    watch: {
+        playerPosition: function(newPosition, oldPosition) {
+            const [X, Y] = this.playerPosition;
+            // checking if the last cell.
+            if (X === this.cellNumbersX && Y === this.cellNumbersY) {
+                if (this.level === 50) {
+                    this.gameStarted = false;
+                } else {
+                    this.nextLevel();
+                }
+            }
+        }
+    },
 });
 </script>
 
@@ -246,10 +262,10 @@ export default Vue.extend({
 
 
     .maze {
-        @apply justify-center my-10 mx-auto;
+        @apply justify-center mb-10 mx-auto;
 
         .maze-cell {
-            @apply w-[50px] h-[50px];
+            @apply w-[25px] h-[25px];
         }
     }
 
