@@ -63,6 +63,11 @@ interface ValidDirectionType {
     data: CellData;
 }
 
+type SingleAllDirectionsUnvisited = Array<string | undefined | CellData>;
+type AllDirectionsUnvisited = Array<SingleAllDirectionsUnvisited>;
+type SingleFilterValidArr = Array<string | CellData>;
+type FilterValidArr = Array<SingleFilterValidArr>;
+
 export default Vue.extend({
     data():MainGameData {
         return {
@@ -109,7 +114,7 @@ export default Vue.extend({
             // ////////////////
 
             currentCell.visited = true;
-            const validNextCell:any = this.getUnvisitedCell(cell); // checking for a valid next direction
+            const validNextCell:getUnvisitedCellType = this.getUnvisitedCell(cell); // checking for a valid next direction
 
 
             // setting entrance
@@ -155,7 +160,7 @@ export default Vue.extend({
         },
         getUnvisitedCell(cell:CellData):getUnvisitedCellType {
             const allDirections = cell.directions.filter(el=> el) as Array<string>;
-            const allDirectionsUnvisited:any = allDirections.map( (direction:string) => {
+            const allDirectionsUnvisited = allDirections.map( (direction:string) => {
                 if (direction === 'top') {
                     return [direction, this.cells.find( (el) => el.cellX === cell.cellX && el.cellY === cell.cellY-1 && !el.visited)]
                 } else if (direction === 'bottom') {
@@ -165,9 +170,9 @@ export default Vue.extend({
                 } else if (direction === 'left') {
                     return [direction, this.cells.find( (el) => el.cellY === cell.cellY && el.cellX === cell.cellX-1 && !el.visited)]
                 }
-            });
+            }) as AllDirectionsUnvisited;
 
-            const filterValid = allDirectionsUnvisited.filter((el:any) => el![1]);
+            const filterValid = allDirectionsUnvisited.filter((el) => el![1]) as FilterValidArr;
             const randomValidDirection = filterValid[Math.floor(Math.random()*filterValid.length)] as RandomValidDirectionType;
 
             if (randomValidDirection?.length) {
@@ -191,15 +196,15 @@ export default Vue.extend({
             this.makePath(this.cells[0], 'entrance');
             document.addEventListener('keydown', this.playerMoveHandler)
         },
-        playerMoveHandler(e:any) {
+        playerMoveHandler(e:Event) {
             const [playerX, playerY] = this.playerPosition;
 
             // getting current cell where player is
-            const [ getCurrentPositionCell ] = this.cells.filter( (el) => {
+            const getCurrentPositionCell = this.cells.filter( (el:CellData) => {
                 if ((el.cellX === playerX) && (el.cellY === playerY)){
                     return el;
                 }
-            }) as any
+            }) as CellData;
             // ////////////////////////////////////
 
             // go top
