@@ -1,6 +1,6 @@
 <template>
     <div
-        class="maze-main relative flex flex-col items-top justify-center min-h-screen bg-gray-100 sm:items-center sm:pt-0"
+        class="maze-main relative flex flex-col items-top justify-center min-h-screen bg-gray-700 sm:items-center sm:pt-0"
     >
         <div class="go-to-bonus">
             <NuxtLink to="/bonus">Bonus game</NuxtLink>

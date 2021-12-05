@@ -8,6 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 *policy.json
 s3.config
+s3Test.config
+deploy.config.js
 
 
 # Runtime data
