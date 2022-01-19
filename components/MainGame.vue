@@ -6,11 +6,11 @@
             <NuxtLink to="/bonus">Bonus game</NuxtLink>
         </div>
         <div class="mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow sm:rounded-lg p-6">
-                <h1 class="text-2xl leading-7 font-semibold mb-6 text-center">Maze</h1>
+            <div class="bg-white overflow-hidden shadow sm:rounded-lg p-6 min-w-[300px]">
+                <h1 class="text-2xl leading-7 font-semibold text-center">Maze</h1>
                 <div v-if="genMazeLoading">Generating maze...</div>
                 <div v-if="gameStarted">
-                    <div>Level {{level}}</div>
+                    <div class="mb-6 text-center">Level {{level}}</div>
                     <div class="maze flex flex-wrap" :style="{width: cellNumbersX*25+2+'px'}">
                         <template v-for="(cell, index) in cells">
                             <Cell :cellData='cell' :playerPositionPropName='playerPosition' :maxX='cellNumbersX' :maxY='cellNumbersY' :key="index" />
@@ -297,7 +297,7 @@ export default Vue.extend({
         @apply fixed top-1/3 -right-20 min-h-[10rem] flex items-center transition-all;
 
         a {
-            @apply bg-yellow-600 py-3 px-4 rotate-45 transition-all;
+            @apply bg-yellow-600 py-3 px-4 rotate-45 transition-all border-2 border-transparent uppercase;
         }
 
         &:hover,
@@ -305,7 +305,7 @@ export default Vue.extend({
         &:focus-within {
             @apply right-3;
             a {
-                @apply rotate-0;
+                @apply rotate-0 text-yellow-600 bg-white border-2 border-yellow-600;
             }
         }
     }

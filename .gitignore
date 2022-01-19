@@ -11,6 +11,7 @@ s3.config
 s3Test.config
 deploy.config.js
 
+/backend/values.yml
 
 # Runtime data
 pids
