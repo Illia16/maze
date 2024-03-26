@@ -24,7 +24,6 @@ export default Vue.extend({
     mounted() {
         console.log('X', this.maxX);
         console.log('Y', this.maxY);
-
     }
 });
 </script>

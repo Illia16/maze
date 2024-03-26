@@ -10,7 +10,6 @@
                 <h1 class="text-2xl leading-7 font-semibold text-center">Maze</h1>
                 <div v-if="genMazeLoading">Generating maze...</div>
                 <div v-if="gameStarted">
-                    <div class="mb-6 text-center">Level {{level}}</div>
                     <div class="maze flex flex-wrap" :style="{width: cellNumbersX*25+2+'px'}">
                         <template v-for="(cell, index) in cells">
                             <Cell :cellData='cell' :playerPositionPropName='playerPosition' :maxX='cellNumbersX' :maxY='cellNumbersY' :key="index" />
@@ -23,9 +22,15 @@
                         <button value="left" @click="playerMoveHandler">&#8592;</button>
                     </div>
                     <p class="text-xs text-center">Use keyboard arrows to move.</p>
+                    <div class="text-center">
+                        <button @click="gameStarted = false" class="border border-gray-300 mt-2 px-4">Exit</button>
+                    </div>
                 </div>
-                <div v-else class="text-center">
-                    <button v-if="!gameStarted" @click="startGame" class="bg-yellow-600 py-3 px-4">Start the game</button>
+                <div v-else class="text-center flex flex-col">
+                    <label>
+                        <input type="text" v-model.number="cellNumbersX" class="border border-yellow-600 mt-2 py-3 px-4 w-full" placeholder="Enter # for the grid">
+                    </label>
+                    <button v-if="!gameStarted" @click="startGame" class="bg-yellow-600 mt-2 py-3 px-4">Start</button>
                 </div>
             </div>
         </div>
@@ -44,11 +49,9 @@ declare interface CellData {
     validDirections: Array<string>
 }
 declare interface MainGameData {
-    level: number,
     playerPosition: Array<number>,
     cells: Array<CellData>,
     cellNumbersX: number,
-    cellNumbersY: number,
     gameStarted: boolean,
     genMazeLoading: boolean,
     path: Array<string>,
@@ -66,18 +69,21 @@ interface ValidDirectionType {
 export default Vue.extend({
     data():MainGameData {
         return {
-            level: 1,
             playerPosition: [1, 1],
             cells: [],
-            cellNumbersX: 5,
-            cellNumbersY: 5,
+            cellNumbersX: 10,
             gameStarted: false,
             genMazeLoading: false,
             path: [],
         };
     },
     mounted() {
-        this.genMaze()
+        // this.genMaze()
+    },
+    computed: {
+        cellNumbersY: function (): number {
+            return this.cellNumbersX;
+        }
     },
     methods: {
         genMaze() {
@@ -177,6 +183,8 @@ export default Vue.extend({
             }
         },
         startGame() {
+            if (isNaN(this.cellNumbersX) || this.cellNumbersX > 49 || !this.cellNumbersX) return;
+            this.genMaze()
             this.gameStarted = true;
             this.genMazeLoading = true;
             this.playerPosition = [1, 1];
@@ -227,9 +235,7 @@ export default Vue.extend({
         },
 
         nextLevel() {
-            this.level += 1;
             this.cellNumbersX += 1;
-            this.cellNumbersY += 1;
             this.genMaze()
             this.startGame()
         },
@@ -242,7 +248,7 @@ export default Vue.extend({
             const [X, Y] = this.playerPosition;
             // checking if the last cell.
             if (X === this.cellNumbersX && Y === this.cellNumbersY) {
-                if (this.level === 50) {
+                if (this.cellNumbersX === 50) {
                     this.gameStarted = false;
                 } else {
                     this.nextLevel();
