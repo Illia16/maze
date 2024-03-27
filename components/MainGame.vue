@@ -2,9 +2,9 @@
     <div
         class="maze-main relative flex flex-col items-top justify-center min-h-screen bg-gray-700 sm:items-center sm:pt-0"
     >
-        <div class="go-to-bonus">
+        <!-- <div class="go-to-bonus">
             <NuxtLink to="/bonus">Bonus game</NuxtLink>
-        </div>
+        </div> -->
         <div class="mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow sm:rounded-lg p-6 min-w-[300px]">
                 <h1 class="text-2xl leading-7 font-semibold text-center">Maze</h1>

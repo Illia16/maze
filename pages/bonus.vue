@@ -6,6 +6,7 @@
         <h1 class="text-pink-400 font-bold text-3xl w-52">
             Get the equal amount in all 3 glasses
         </h1>
+        <h2 class="text-pink-400 font-bold text-2xl">The purpose of this is to see how setTimeout functions work together.</h2>
         <div class="h-12">
             <select name="difficulty" id="difficulty" v-model="timeOut" v-if="totalAmount===userAmount">
                 <option :value=0>Select difficulty</option>
